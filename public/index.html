@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OutGrow | WhatsApp Number Validator</title>
+  <link rel="icon" type="image/png" href="app-icon.png" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Top Header -->
+    <header class="header">
+      <div class="logo-group">
+        <img src="logo.png" alt="OutGrow Logo" class="brand-logo" />
+        <div class="brand-info">
+          <div class="brand-title-row">
+            <span class="brand-company-name">OutGrow</span>
+            <span class="brand-badge">PRO</span>
+          </div>
+          <h1 class="brand-app-name">WhatsApp Number Validator</h1>
+          <p class="subtitle">Row-by-row automated check • Powered by OutGrow</p>
+        </div>
+      </div>
+
+      <!-- Auth / Session Bar -->
+      <div class="session-bar">
+        <div id="authStatusBadge" class="badge badge-warning">
+          <span class="status-dot"></span>
+          <span id="authStatusText">Checking Session...</span>
+        </div>
+        <button id="btnShareLink" class="btn btn-cf" title="Share public HTTPS link using Cloudflare Tunnel">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4 0-2.05 1.53-3.76 3.56-3.97l1.07-.11.5-.95C8.08 7.14 9.94 6 12 6c2.62 0 4.88 1.86 5.39 4.43l.3 1.5 1.53.11c1.56.1 2.78 1.41 2.78 2.96 0 1.65-1.35 3-3 3z"/>
+          </svg>
+          <span>Share Public Link</span>
+          <span id="tunnelLiveDot" class="live-dot hidden" title="Public Link Active"></span>
+        </button>
+        <button id="btnLogout" class="btn btn-outline" title="Log out from current WhatsApp account and switch to another">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Log Out
+        </button>
+        <button id="btnCloseBrowser" class="btn btn-outline" title="Close Chrome session">
+          Close Browser
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="main-grid">
+      <!-- Left Panel: Input & Settings -->
+      <section class="card input-section">
+        <div class="card-header">
+          <h2>Phone Numbers (One per row)</h2>
+          <span id="numberCount" class="counter">0 numbers</span>
+        </div>
+
+        <textarea 
+          id="numbersInput" 
+          placeholder="+1 555-123-4567&#10;919876543210&#10;+44 7911 123456&#10;9876543210"
+          spellcheck="false"
+        ></textarea>
+
+        <div class="settings-grid">
+          <div class="form-group">
+            <label for="defaultCountryCode">Default Country Code (Optional)</label>
+            <input type="text" id="defaultCountryCode" placeholder="e.g. 91 or 1" />
+            <small>Applied to 10-digit numbers missing a country code</small>
+          </div>
+
+          <div class="form-group">
+            <label>Randomized Pacing Delay (Seconds)</label>
+            <div class="pacing-range-inputs">
+              <div class="range-field">
+                <span class="range-label">Min</span>
+                <input type="number" id="minDelay" value="5" min="0" max="60" step="0.5" />
+              </div>
+              <div class="range-field">
+                <span class="range-label">Max</span>
+                <input type="number" id="maxDelay" value="12" min="0" max="60" step="0.5" />
+              </div>
+            </div>
+            <small>Random delay between completed checks</small>
+          </div>
+        </div>
+
+        <div class="button-group">
+          <button id="btnStart" class="btn btn-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Start Validation
+          </button>
+          <button id="btnStop" class="btn btn-danger" disabled>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12"/></svg>
+            Stop
+          </button>
+          <button id="btnClear" class="btn btn-outline">
+            Clear
+          </button>
+        </div>
+      </section>
+
+      <!-- Right Panel: Real-time Stats & Results -->
+      <section class="card results-section">
+        <!-- Stats Row -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-label">Total</div>
+            <div id="statTotal" class="stat-val">0</div>
+          </div>
+          <div class="stat-card stat-valid">
+            <div class="stat-label">Valid (Active)</div>
+            <div id="statValid" class="stat-val">0</div>
+          </div>
+          <div class="stat-card stat-invalid">
+            <div class="stat-label">Invalid (Not on WA)</div>
+            <div id="statInvalid" class="stat-val">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Progress</div>
+            <div id="statProgress" class="stat-val">0%</div>
+          </div>
+        </div>
+
+        <!-- Progress Bar & Status Text -->
+        <div class="progress-bar-container">
+          <div id="progressBar" class="progress-bar" style="width: 0%;"></div>
+        </div>
+        <div id="liveStatusText" class="live-status">Ready to validate</div>
+
+        <!-- Table Controls & Export -->
+        <div class="table-toolbar">
+          <div class="filter-tabs">
+            <button class="tab-btn active" data-filter="all">All (<span id="countAll">0</span>)</button>
+            <button class="tab-btn" data-filter="valid">Valid (<span id="countValid">0</span>)</button>
+            <button class="tab-btn" data-filter="invalid">Invalid (<span id="countInvalid">0</span>)</button>
+          </div>
+          <div class="export-actions">
+            <button id="btnCopyValid" class="btn btn-sm btn-outline">
+              📋 Copy Valid Numbers
+            </button>
+            <button id="btnExportCsv" class="btn btn-sm btn-secondary">
+              📥 Export CSV
+            </button>
+          </div>
+        </div>
+
+        <!-- Results Table -->
+        <div class="table-wrapper">
+          <table class="results-table">
+            <thead>
+              <tr>
+                <th style="width: 50px;">#</th>
+                <th>Input Number</th>
+                <th>Cleaned</th>
+                <th style="width: 120px;">Status</th>
+                <th>Detection Reason</th>
+              </tr>
+            </thead>
+            <tbody id="resultsTableBody">
+              <tr class="empty-state">
+                <td colspan="5">No numbers validated yet. Paste phone numbers on the left and click "Start Validation".</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <!-- App Footer -->
+    <footer class="app-footer">
+      <div class="footer-content">
+        <div class="footer-brand">
+          <span class="footer-logo-badge">
+            <img src="logo.png" alt="OutGrow" class="footer-logo" />
+          </span>
+          <span>OutGrow</span>
+        </div>
+        <p class="footer-text">&copy; 2026 OutGrow. All rights reserved. • WhatsApp Number Validator</p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- QR Code Modal -->
+  <div id="qrModal" class="modal-backdrop hidden">
+    <div class="modal-card qr-modal-card">
+      <div class="modal-header">
+        <div class="modal-header-title">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="color: var(--wa-green);">
+            <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24z"/>
+          </svg>
+          <h3>Link WhatsApp Web</h3>
+        </div>
+        <button id="btnCloseQrModal" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body qr-modal-body">
+        <p class="modal-hint">Scan this QR code with WhatsApp on your phone:</p>
+        <div class="qr-box-wrapper">
+          <div class="qr-box">
+            <div id="qrSpinner" class="qr-loading">
+              <div class="spinner"></div>
+              <span>Fetching live QR Code from WhatsApp...</span>
+            </div>
+            <img id="qrImage" class="qr-image hidden" alt="WhatsApp QR Code" />
+          </div>
+        </div>
+        <div class="qr-steps">
+          <ol>
+            <li>Open <strong>WhatsApp</strong> on your phone</li>
+            <li>Tap <strong>Settings</strong> or <strong>Menu (⋮)</strong> &gt; <strong>Linked Devices</strong></li>
+            <li>Tap <strong>Link a Device</strong> and point your camera at this QR code</li>
+          </ol>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btnRefreshQr" class="btn btn-sm btn-secondary">🔄 Refresh QR</button>
+        <button id="btnFocusChrome" class="btn btn-sm btn-outline">🖥️ Show Chrome Window</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cloudflare Tunnel Modal -->
+  <div id="tunnelModal" class="modal-backdrop hidden">
+    <div class="modal-card tunnel-modal-card">
+      <div class="modal-header">
+        <div class="modal-header-title">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="color: #f6821f;">
+            <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4 0-2.05 1.53-3.76 3.56-3.97l1.07-.11.5-.95C8.08 7.14 9.94 6 12 6c2.62 0 4.88 1.86 5.39 4.43l.3 1.5 1.53.11c1.56.1 2.78 1.41 2.78 2.96 0 1.65-1.35 3-3 3z"/>
+          </svg>
+          <h3>Share OutGrow Validator (Cloudflare Tunnel)</h3>
+        </div>
+        <button id="btnCloseTunnelModal" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-hint">
+          Create an instant, secure HTTPS public link. Anyone with this link can access your WhatsApp Validator dashboard from any browser or phone.
+        </p>
+
+        <!-- Tunnel Status Box -->
+        <div id="tunnelStatusCard" class="tunnel-status-card">
+          <div class="tunnel-status-header">
+            <span class="tunnel-status-label">Tunnel Status:</span>
+            <span id="tunnelStatusBadge" class="badge badge-neutral">Inactive</span>
+          </div>
+
+          <!-- When Stopped -->
+          <div id="tunnelStoppedView" class="tunnel-view">
+            <p class="tunnel-desc">No public link is currently running. The tool is only running locally on your computer at <code>http://localhost:3000</code>.</p>
+            <button id="btnStartTunnel" class="btn btn-cf btn-lg">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/>
+              </svg>
+              Start Public Link
+            </button>
+          </div>
+
+          <!-- When Starting -->
+          <div id="tunnelStartingView" class="tunnel-view hidden">
+            <div class="tunnel-spinner-box">
+              <div class="spinner"></div>
+              <span>Connecting to Cloudflare edge network...</span>
+            </div>
+            <p class="tunnel-subtext">This usually takes about 3 to 5 seconds.</p>
+          </div>
+
+          <!-- When Running -->
+          <div id="tunnelRunningView" class="tunnel-view hidden">
+            <label class="url-input-label">Your Live Public URL:</label>
+            <div class="url-copy-box">
+              <input type="text" id="tunnelUrlInput" readonly value="" placeholder="https://....trycloudflare.com" />
+              <button id="btnCopyTunnelUrl" class="btn btn-secondary" title="Copy to clipboard">
+                📋 Copy
+              </button>
+              <a id="btnOpenTunnelUrl" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-outline" title="Open in new tab">
+                ↗ Open
+              </a>
+            </div>
+
+            <div class="tunnel-actions">
+              <button id="btnStopTunnel" class="btn btn-danger btn-sm">
+                🛑 Stop Sharing Public Link
+              </button>
+            </div>
+          </div>
+
+          <!-- When Error -->
+          <div id="tunnelErrorView" class="tunnel-view hidden">
+            <p id="tunnelErrorText" class="tunnel-error-msg"></p>
+            <button id="btnRetryTunnel" class="btn btn-secondary btn-sm">Retry Starting Tunnel</button>
+          </div>
+        </div>
+
+        <div class="tunnel-tips">
+          <div class="tip-item">
+            <span class="tip-icon">🌐</span>
+            <span><strong>Global Access:</strong> Works anywhere in the world without router port forwarding or DNS config.</span>
+          </div>
+          <div class="tip-item">
+            <span class="tip-icon">🔒</span>
+            <span><strong>Secure & Local:</strong> Your WhatsApp web session and browser automation stay completely on your computer.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
